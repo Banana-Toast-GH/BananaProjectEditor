@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 
-$VERSION = "v0.3.8"
+$VERSION = "v0.3.5"
 $REPO = "Banana-Toast-GH/BananaProjectEditor"
 $ZIP_URL = "https://github.com/$REPO/releases/download/$VERSION/BananaProjectEditor.zip"
 $INSTALL = "$env:LOCALAPPDATA\BananaProjectEditor"
@@ -27,10 +27,29 @@ Write-Host "Downloaded." -ForegroundColor Green
 
 # Extract
 Write-Host "Extracting..." -ForegroundColor Cyan
-if (Test-Path $INSTALL) { Remove-Item $INSTALL -Recurse -Force }
+if (Test-Path $INSTALL) {
+    try { Remove-Item $INSTALL -Recurse -Force -ErrorAction Stop }
+    catch { Write-Host "Could not remove old install - will overwrite." -ForegroundColor Yellow }
+}
 New-Item -ItemType Directory -Path $INSTALL -Force | Out-Null
+# Extract with overwrite
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $INSTALL)
+try {
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $INSTALL)
+} catch {
+    # Overwrite existing files manually
+    $zipObj = [System.IO.Compression.ZipFile]::OpenRead($zip)
+    foreach ($entry in $zipObj.Entries) {
+        $destPath = Join-Path $INSTALL $entry.FullName
+        if ($entry.Name -eq "") {
+            New-Item -ItemType Directory -Path $destPath -Force | Out-Null
+        } else {
+            New-Item -ItemType Directory -Path (Split-Path $destPath) -Force | Out-Null
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destPath, $true)
+        }
+    }
+    $zipObj.Dispose()
+}
 Remove-Item $zip -Force
 
 # Move inner folder up if needed
