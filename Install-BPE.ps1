@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 
-$VERSION = "v0.3.7"
+$VERSION = "v0.3.8"
 $REPO = "Banana-Toast-GH/BananaProjectEditor"
 $ZIP_URL = "https://github.com/$REPO/releases/download/$VERSION/BananaProjectEditor.zip"
 $INSTALL = "$env:LOCALAPPDATA\BananaProjectEditor"
